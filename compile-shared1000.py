@@ -16,6 +16,13 @@ import pandas as pd
 )
 def main(subj_name, data_dir):
     """
+    Create paired nifti, clip-embedding arrays
+    of Shared1000 stimulus set.
+
+    Parameters
+    ----------
+    subj_name : str
+    data_dir : str
     """
     out_path = Path(
         data_dir,
@@ -32,7 +39,7 @@ def main(subj_name, data_dir):
         Path(data_dir, "stimuli.clip-features", "file_names.txt"),
         sep='/',
         header=None,
-        names=["dir", "split", "fname"]
+        names=["dir", "split", "filename"]
     )
     clip_arr = np.load(
         Path(data_dir, "stimuli.clip-features", "features.npy"),
@@ -64,7 +71,7 @@ def main(subj_name, data_dir):
         
         # grab stimulus clip embeddings
         stim_idx = clip_df.index[
-            clip_idx["filename"] == f"{str(stim_name).zfill(12)}.jpg"
+            clip_df["filename"] == f"{str(stim_name).zfill(12)}.jpg"
         ].to_list()
         clip_feats.append(clip_arr[stim_idx])
 
