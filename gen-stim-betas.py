@@ -50,10 +50,6 @@ def extract_average_betas(subj_name, out_path, subj_df, stim):
     session_idc = stim_df["session_id"].unique()
 
     for ss_idc in session_idc:
-
-        import os
-        print(os.getcwd())
-        print(subj_name)
         
         # grab session-specific betas
         beta_fname = list(
