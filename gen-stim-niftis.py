@@ -8,21 +8,30 @@ from nibabel import Nifti1Image
 import pandas as pd
 
 
-def convert_to_nii(subj_name, ref_niimg, stim_num):
-    arr = np.load(Path('stimuli.betas', subj_name, f'{stim_num}.npy'))
+def convert_to_nii(subj_name, ref_niimg, data_dir, stim_num):
+    stim_files = list(Path(data_dir, 'stimuli.betas', subj_name).rglob(
+        f'stimulus-{stim_num}_session*.npy'))
 
-    # Beta values should be divided by 300 for appropriate
-    # scaling ; see https://cvnlab.slite.page/p/6CusMRYfk0#7dfe1d13
-    arr = (arr / 300)
+    for sf in stim_files:
+        arr = np.load(sf)
+        # Beta values should be divided by 300 for appropriate
+        # scaling ; see https://cvnlab.slite.page/p/6CusMRYfk0#7dfe1d13
+        arr = (arr / 300)
 
-    # downcast to float32 to save disk space and memory
-    img = Nifti1Image(
-        arr, 
-        ref_niimg.affine, 
-        ref_niimg.header, 
-        dtype=np.float32,
-    )
-    img.to_filename(Path('stimuli.betas', subj_name, f'{stim_num}.nii.gz'))
+        # downcast to float32 to save disk space and memory
+        img = Nifti1Image(
+            arr, 
+            ref_niimg.affine, 
+            ref_niimg.header, 
+            dtype=np.float32,
+        )
+        img.to_filename(
+            Path(data_dir,
+                 'stimuli.betas',
+                 subj_name,
+                 f'{sf.stem}.nii.gz'
+                 )
+            )
     print(f"Finished with {stim_num}...")
     return
 
@@ -56,7 +65,7 @@ def main(subj_name, data_dir):
     stim_names = subj_df["cocoId"].unique()
     Parallel(n_jobs=100)(
         delayed(convert_to_nii)(
-            subj_name, ref_niimg, stim_name
+            subj_name, ref_niimg, data_dir, stim_name
             ) for stim_name in stim_names
     )
 

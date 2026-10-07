@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --job-name=nsd-niftis
-#SBATCH --array=0-7
-#SBATCH --mem=100G
+#SBATCH --array=0
+#SBATCH --mem=64G
 #SBATCH --cpus-per-task=50
-#SBATCH --time=00:30:00
+#SBATCH --time=00:15:00
 #SBATCH --account=def-pbellec
 
 SCRATCH=/scratch/emdupre
