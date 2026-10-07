@@ -32,7 +32,7 @@ def create_group_mask(data_dir):
     return group_mask
 
 
-def extract_average_betas(subj_name, out_path, subj_df, stim):
+def extract_average_betas(subj_name, out_path, subj_df, data_dir, stim):
     """
     Generate and save to disk a numpy array
     with the average beta values for a given stimulus
@@ -53,7 +53,7 @@ def extract_average_betas(subj_name, out_path, subj_df, stim):
         
         # grab session-specific betas
         beta_fname = list(
-            Path(subj_name).rglob(
+            Path(data_dir, subj_name).rglob(
                 f"betas_session{ss_idc:02}.nii.gz"
             )
         )[0]
@@ -79,7 +79,7 @@ def extract_average_betas(subj_name, out_path, subj_df, stim):
     return
 
 
-def extract_individual_betas(subj_name, out_path, subj_df, stim):
+def extract_individual_betas(subj_name, out_path, subj_df, data_dir, stim):
     """
     Generate and save to disk a numpy array
     with the individual beta values for a given
@@ -100,7 +100,7 @@ def extract_individual_betas(subj_name, out_path, subj_df, stim):
         
         # grab session-specific betas
         beta_fname = list(
-            Path(subj_name).rglob(
+            Path(data_dir, subj_name).rglob(
                 f"betas_session{ss_idc:02}.nii.gz"
             )
         )[0]
@@ -158,7 +158,7 @@ def main(subj_name, data_dir):
     stim_names = subj_df["cocoId"].unique()
     Parallel(n_jobs=100)(
         delayed(extract_individual_betas)(
-            subj_name, out_path, subj_df, stim
+            subj_name, out_path, subj_df, data_dir, stim
             ) for stim in stim_names
     )
 
