@@ -9,6 +9,12 @@ import pandas as pd
 
 
 def convert_to_nii(subj_name, ref_niimg, data_dir, stim_num):
+    out_path = Path(
+        data_dir,
+        "stimuli.betas",
+        subj_name
+    )
+
     stim_files = list(Path(data_dir, 'stimuli.betas', subj_name).rglob(
         f'stimulus-{stim_num}_session*.npy'))
 
@@ -26,12 +32,8 @@ def convert_to_nii(subj_name, ref_niimg, data_dir, stim_num):
             dtype=np.float32,
         )
         img.to_filename(
-            Path(data_dir,
-                 'stimuli.betas',
-                 subj_name,
-                 f'{sf.stem}.nii.gz'
-                 )
-            )
+            Path(out_path, f'{sf.stem}.nii.gz')
+        )
     print(f"Finished with {stim_num}...")
     return
 
@@ -46,13 +48,7 @@ def convert_to_nii(subj_name, ref_niimg, data_dir, stim_num):
 def main(subj_name, data_dir):
     """
     """
-    out_path = Path(
-        data_dir,
-        "stimuli.betas",
-        subj_name
-    )
-
-    ref_niimg = nib.load(Path(subj_name, 'betas_session01.nii.gz'))
+    ref_niimg = nib.load(Path(data_dir, subj_name, 'betas_session01.nii.gz'))
     stim_df = pd.read_csv(
         Path(data_dir, "nsd_stim_info_long_format.csv"),
         index_col=0
