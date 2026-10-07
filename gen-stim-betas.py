@@ -79,6 +79,54 @@ def extract_average_betas(subj_name, out_path, subj_df, stim):
     return
 
 
+def extract_individual_betas(subj_name, out_path, subj_df, stim):
+    """
+    Generate and save to disk a numpy array
+    with the individual beta values for a given
+    stimulus image.
+
+    Parameters
+    ----------
+    stim : str
+    """
+    print(f"Starting {stim}...")
+    stim_df = subj_df.loc[subj_df["cocoId"] == stim]
+    stim_betas = []
+
+    # grab session indices where this stimulus appeared
+    session_idc = stim_df["session_id"].unique()
+
+    for ss_idc in session_idc:
+        
+        # grab session-specific betas
+        beta_fname = list(
+            Path(subj_name).rglob(
+                f"betas_session{ss_idc:02}.nii.gz"
+            )
+        )[0]
+
+        # index betas on identified session_trial_id for
+        # this stimulus and this session
+        sess_df = subj_df.loc[
+            (subj_df["session_id"] == ss_idc) &
+            (subj_df["cocoId"] == stim)
+        ]
+        session_trials = sess_df["session_trial_id"].unique()
+        for ss_trial in session_trials:  # these are 1- rather than 0-indexed...
+            stim_betas.append(
+                nib.load(beta_fname).slicer[..., ss_trial - 1]
+            )
+
+    for sbeta, ss_idc in zip(stim_betas, session_idc):
+        print(Path(out_path, f"stimulus-{stim}_session-{ss_idc:02}.npy"))
+        np.save(
+            Path(out_path, f"{stim}_session{ss_idc:02}.npy"),
+            sbeta.get_fdata()
+        )
+    print(f"Finished with {stim}...")
+    return
+
+
 
 @click.command()
 @click.option("--subj_name", default="subj01", help="Subject name.")
@@ -109,7 +157,7 @@ def main(subj_name, data_dir):
     # list all stimulus identifiers and then iterate
     stim_names = subj_df["cocoId"].unique()
     Parallel(n_jobs=100)(
-        delayed(extract_average_betas)(
+        delayed(extract_individual_betas)(
             subj_name, out_path, subj_df, stim
             ) for stim in stim_names
     )
