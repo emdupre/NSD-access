@@ -1,3 +1,4 @@
+from copy import deepcopy
 from pathlib import Path
 
 import click
@@ -8,33 +9,23 @@ from nibabel import Nifti1Image
 import pandas as pd
 
 
-def convert_to_nii(subj_name, ref_niimg, data_dir, stim_num):
-    out_path = Path(
-        data_dir,
-        "stimuli.betas",
-        subj_name
+def convert_to_nii(ref_affine, ref_header, out_path, stim_file):
+    arr = np.load(stim_file)
+    # Beta values should be divided by 300 for appropriate
+    # scaling ; see https://cvnlab.slite.page/p/6CusMRYfk0#7dfe1d13
+    arr = (arr / 300)
+
+    # downcast to float32 to save disk space and memory
+    img = Nifti1Image(
+        arr, 
+        ref_affine,
+        ref_header,
+        dtype=np.float32,
     )
-
-    stim_files = list(Path(data_dir, 'stimuli.betas', subj_name).rglob(
-        f'stimulus-{stim_num}_session*.npy'))
-
-    for sf in stim_files:
-        arr = np.load(sf)
-        # Beta values should be divided by 300 for appropriate
-        # scaling ; see https://cvnlab.slite.page/p/6CusMRYfk0#7dfe1d13
-        arr = (arr / 300)
-
-        # downcast to float32 to save disk space and memory
-        img = Nifti1Image(
-            arr, 
-            ref_niimg.affine, 
-            ref_niimg.header, 
-            dtype=np.float32,
-        )
-        img.to_filename(
-            Path(out_path, f'{sf.stem}.nii.gz')
-        )
-    print(f"Finished with {stim_num}...")
+    img.to_filename(
+        Path(out_path, f'{stim_file.stem}.nii.gz')
+    )
+    print(f"Finished with {stim_file.name}...")
     return
 
 
@@ -48,21 +39,23 @@ def convert_to_nii(subj_name, ref_niimg, data_dir, stim_num):
 def main(subj_name, data_dir):
     """
     """
-    ref_niimg = nib.load(Path(data_dir, subj_name, 'betas_session01.nii.gz'))
-    stim_df = pd.read_csv(
-        Path(data_dir, "nsd_stim_info_long_format.csv"),
-        index_col=0
+    out_path = Path(
+        data_dir,
+        "stimuli.betas",
+        subj_name
     )
-    # load and parse subject-specific information
-    subj_idx = int(subj_name[-1])
-    subj_df = stim_df.loc[stim_df["subjectId"] == subj_idx]
 
-    # list all stimulus identifiers and then iterate
-    stim_names = subj_df["cocoId"].unique()
-    Parallel(n_jobs=100)(
+    ref_niimg = nib.load(Path(data_dir, subj_name, 'betas_session01.nii.gz'))
+    ref_affine = deepcopy(ref_niimg.affine)
+    ref_header = deepcopy(ref_niimg.header)
+
+    stim_files = list(out_path.rglob(
+                f'stimulus-*_session*.npy'))
+
+    Parallel(n_jobs=25)(
         delayed(convert_to_nii)(
-            subj_name, ref_niimg, data_dir, stim_name
-            ) for stim_name in stim_names
+            ref_affine, ref_header, out_path, stim_file
+            ) for stim_file in stim_files
     )
 
 

@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --job-name=nsd-betas
-#SBATCH --array=0-8
+#SBATCH --array=1,4,6
 #SBATCH --mem=100G
 #SBATCH --cpus-per-task=50
-#SBATCH --time=06:00:00
+#SBATCH --time=08:00:00
 #SBATCH --account=def-pbellec
 
 SCRATCH=/scratch/emdupre
@@ -14,6 +14,6 @@ source $PROJECT/nsd.env/bin/activate
 
 echo ${subjects[$SLURM_ARRAY_TASK_ID]}
 
-python $PROJECT/src/gen-inputs.py \
+python $PROJECT/src/gen-stim-betas.py \
     --subj_name=${subjects[$SLURM_ARRAY_TASK_ID]} \
     --data_dir=$PROJECT

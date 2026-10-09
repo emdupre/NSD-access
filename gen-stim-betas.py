@@ -50,7 +50,7 @@ def extract_average_betas(subj_name, out_path, subj_df, data_dir, stim):
     session_idc = stim_df["session_id"].unique()
 
     for ss_idc in session_idc:
-        
+
         # grab session-specific betas
         beta_fname = list(
             Path(data_dir, subj_name).rglob(
@@ -118,9 +118,9 @@ def extract_individual_betas(subj_name, out_path, subj_df, data_dir, stim):
             )
 
     for sbeta, ss_idc in zip(stim_betas, session_idc):
-        print(Path(out_path, f"stimulus-{stim}_session-{ss_idc:02}.npy"))
+        # print(Path(out_path, f"stimulus-{stim}_session-{ss_idc:02}.npy"))
         np.save(
-            Path(out_path, f"{stim}_session{ss_idc:02}.npy"),
+            Path(out_path, f"stimulus-{stim}_session{ss_idc:02}.npy"),
             sbeta.get_fdata()
         )
     print(f"Finished with {stim}...")
