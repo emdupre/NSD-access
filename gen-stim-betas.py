@@ -1,3 +1,4 @@
+from copy import deepcopy
 from pathlib import Path
 
 import click
@@ -79,7 +80,7 @@ def extract_average_betas(subj_name, out_path, subj_df, data_dir, stim):
     return
 
 
-def extract_individual_betas(subj_name, out_path, subj_df, data_dir, stim):
+def extract_individual_betas(subj_df, ref_header, ref_affine, out_path, stim):
     """
     Generate and save to disk a numpy array
     with the individual beta values for a given
@@ -91,37 +92,27 @@ def extract_individual_betas(subj_name, out_path, subj_df, data_dir, stim):
     """
     print(f"Starting {stim}...")
     stim_df = subj_df.loc[subj_df["cocoId"] == stim]
-    stim_betas = []
+    subj_idx = int(subj_df["subjectId"].unique()[0])
 
     # grab session indices where this stimulus appeared
-    session_idc = stim_df["session_id"].unique()
-
-    for ss_idc in session_idc:
-        
-        # grab session-specific betas
+    for row in stim_df.itertuples():
+    
+        # grab session-specific beta file
         beta_fname = list(
-            Path(data_dir, subj_name).rglob(
-                f"betas_session{ss_idc:02}.nii.gz"
+            Path(out_path.parent.parent, f"subj{subj_idx:02}").rglob(
+                f"betas_session{row.session_id:02}.nii.gz"
             )
         )[0]
 
         # index betas on identified session_trial_id for
-        # this stimulus and this session
-        sess_df = subj_df.loc[
-            (subj_df["session_id"] == ss_idc) &
-            (subj_df["cocoId"] == stim)
-        ]
-        session_trials = sess_df["session_trial_id"].unique()
-        for ss_trial in session_trials:  # these are 1- rather than 0-indexed...
-            stim_betas.append(
-                nib.load(beta_fname).slicer[..., ss_trial - 1]
+        # this stimulus and this session_trial_id
+        # NOTE: these are 1- rather than 0-indexed.
+        sbeta = nib.load(beta_fname).slicer[..., row.session_trial_id - 1]
+        sbeta.to_filename(
+            Path(
+                out_path,
+                f"stimulus-{stim}_session-{row.session_id:02}_trial-{row.session_trial_id:03}.nii.gz"
             )
-
-    for sbeta, ss_idc in zip(stim_betas, session_idc):
-        # print(Path(out_path, f"stimulus-{stim}_session-{ss_idc:02}.npy"))
-        np.save(
-            Path(out_path, f"stimulus-{stim}_session{ss_idc:02}.npy"),
-            sbeta.get_fdata()
         )
     print(f"Finished with {stim}...")
     return
@@ -146,6 +137,10 @@ def main(subj_name, data_dir):
     if not out_path.is_dir():
         out_path.parent.mkdir(exist_ok=True, parents=True)
 
+    ref_niimg = nib.load(Path(data_dir, subj_name, 'betas_session01.nii.gz'))
+    ref_affine = deepcopy(ref_niimg.affine)
+    ref_header = deepcopy(ref_niimg.header)
+
     stim_df = pd.read_csv(
         Path(data_dir, "nsd_stim_info_long_format.csv"),
         index_col=0
@@ -158,7 +153,7 @@ def main(subj_name, data_dir):
     stim_names = subj_df["cocoId"].unique()
     Parallel(n_jobs=100)(
         delayed(extract_individual_betas)(
-            subj_name, out_path, subj_df, data_dir, stim
+            subj_df, ref_header, ref_affine, out_path, stim
             ) for stim in stim_names
     )
 

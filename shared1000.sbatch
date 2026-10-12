@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=nsd-shared1000
-#SBATCH --array=1,2,3
+#SBATCH --array=0,1,2,3
 #SBATCH --mem=15G
 #SBATCH --time=00:05:00
 #SBATCH --account=def-pbellec

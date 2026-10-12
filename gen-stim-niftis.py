@@ -45,12 +45,10 @@ def main(subj_name, data_dir):
         subj_name
     )
 
-    ref_niimg = nib.load(Path(data_dir, subj_name, 'betas_session01.nii.gz'))
-    ref_affine = deepcopy(ref_niimg.affine)
-    ref_header = deepcopy(ref_niimg.header)
+
 
     stim_files = list(out_path.rglob(
-                f'stimulus-*_session*.npy'))
+                f'stimulus-*_trial*.npy'))
 
     Parallel(n_jobs=25)(
         delayed(convert_to_nii)(

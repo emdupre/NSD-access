@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --job-name=nsd-betas
-#SBATCH --array=1,4,6
+#SBATCH --array=0-7
 #SBATCH --mem=100G
 #SBATCH --cpus-per-task=50
-#SBATCH --time=08:00:00
+#SBATCH --time=16:00:00
 #SBATCH --account=def-pbellec
 
 SCRATCH=/scratch/emdupre

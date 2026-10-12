@@ -21,7 +21,7 @@ def _isolate_session(ses_file):
     str
         Session identifier extracted from the file name.
     """
-    return ses_file.stem.split("session")[1].split(".")[0]
+    return ses_file.stem.split("_")[2].split("-")[1]
 
 
 @click.command()
@@ -77,6 +77,8 @@ def main(subj_name, data_dir):
     shared_stim = subj_df[subj_df["shared1000"]]
     stim_names = shared_stim["cocoId"].unique()
 
+    print(f"Working with {len(stim_names)} stimuli, from dataFrame of len {len(shared_stim)}")
+
     niimgs = []
     clip_feats = []
     out_names = []
@@ -85,10 +87,17 @@ def main(subj_name, data_dir):
     for stim_name in stim_names:
 
         # grab stimulus beta image
-        ses_files = list(
+        beta_files = list(
             Path(data_dir, 'stimuli.betas', subj_name).rglob(
-                f'res-3mm_stimulus-{stim_name}_session*.nii.gz'
+                f'res-3mm_stimulus-{stim_name}_session-*.nii.gz'
                 )
+            )
+        
+        # check len
+        if len(beta_files) != 3:
+            print(
+                len(beta_files),
+                f"not exactly 3 betas found for stimulus-{stim_name}"
             )
 
         # grab stimulus clip embeddings
@@ -96,12 +105,15 @@ def main(subj_name, data_dir):
             clip_df["filename"] == f"{str(stim_name).zfill(12)}.jpg"
         ].to_list()
 
-        # for each session, include
-        for ses_file in ses_files:
-            niimgs.append(nib.load(ses_file))  # the betas,
-            session_names.append(_isolate_session(ses_file))  # session identifiers
+
+        for b in beta_files:
+            niimgs.append(nib.load(b))  # the betas,
+            session_names.append(_isolate_session(b))  # session identifiers
             clip_feats.append(clip_arr[stim_idx])  # embeddings, 
             out_names.append(stim_name)  # and stimulus identifiers
+
+    print(f"Found {len(niimgs)} betas, {len(clip_feats)} embeddings, "
+          f"{len(out_names)} stimuli, and {len(session_names)} sessions.")
 
     # collapse all betas into one nii image
     out_niimg = image.concat_imgs(niimgs)

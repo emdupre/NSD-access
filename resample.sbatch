@@ -2,7 +2,7 @@
 #SBATCH --job-name=nsd-resample
 #SBATCH --array=0-7
 #SBATCH --mem=20G
-#SBATCH --time=01:45:00
+#SBATCH --time=04:00:00
 #SBATCH --account=def-pbellec
 
 SCRATCH=/scratch/emdupre
